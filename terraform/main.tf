@@ -3,15 +3,13 @@ locals {
   project_name = "lab_week_14"
 }
 
-# get the most recent ami for Ubuntu 25.04 owned by amazon
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami
-data "aws_ami" "ubuntu" {
+data "aws_ami" "debian" {
   most_recent = true
-  owners      = ["amazon"]
+  owners      = ["136693071363"]
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/*-25.04-amd64-server-*"]
+    values = ["debian-13-amd64-*"]
   }
 }
 
@@ -121,11 +119,11 @@ resource "aws_vpc_security_group_egress_rule" "web-egress" {
 # create the ec2 instance using a module
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance
 # rocky linux for redis
-module "redis" {
+module "database" {
   source                 = "./modules/web-server/"
   project_name           = local.project_name # project name from local
-  ec2_name               = "rocky"
-  ec2_role               = "redis-server"
+  ec2_name               = "database"
+  ec2_role               = "Database"
   ami                    = "ami-093bd987f8e53e1f2"
   key_name               = "aws-4640"                  # SSH key name
   vpc_security_group_ids = [aws_security_group.web.id] # Pass security group IDs here
@@ -133,23 +131,23 @@ module "redis" {
 }
 
 # ubuntu front end
-module "frontend" {
+module "web" {
   source                 = "./modules/web-server/"
   project_name           = local.project_name # project name from local
-  ec2_name               = "ubuntu"
-  ec2_role               = "frontend-server"
-  ami                    = data.aws_ami.ubuntu.id      # data source AMI
+  ec2_name               = "web"
+  ec2_role               = "web"
+  ami                    = data.aws_ami.debian.id      # data source AMI
   key_name               = "aws-4640"                  # SSH key name
   vpc_security_group_ids = [aws_security_group.web.id] # Pass security group IDs here
   subnet_id              = aws_subnet.web.id           # Pass the subnet ID here
 }
 
-output "frontend" {
-  description = "output for frontend ec2"
-  value       = module.frontend.instance_ip_addr
+output "web_ip" {
+  description = "Web IP"
+  value       = module.web.instance_ip_addr
 }
 
-output "redis" {
-  description = "output for frontend ec2"
-  value       = module.redis.instance_ip_addr
+output "database_ip" {
+  description = "Database IP"
+  value       = module.database.instance_ip_addr
 }

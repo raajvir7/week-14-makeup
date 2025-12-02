@@ -7,7 +7,6 @@ variable "project_name" {
 variable "ec2_name" {
   description = "The value for the ec2 name tag"
   type        = string
-  default     = "server"
 }
 
 variable "ec2_role" {
