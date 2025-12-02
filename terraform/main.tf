@@ -13,16 +13,6 @@ data "aws_ami" "debian" {
   }
 }
 
-data "aws_ami" "rocky" {
-  most_recent = true
-  owners      = ["792107900819"] 
-
-  filter {
-    name   = "name"
-    values = ["Rocky Linux 9*", "Rocky-9.*"]
-  }
-}
-
 # Create a VPC
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc
 resource "aws_vpc" "web" {
@@ -134,7 +124,7 @@ module "database" {
   project_name           = local.project_name # project name from local
   ec2_name               = "database"
   ec2_role               = "Database"
-  ami                    = data.aws_ami.rocky.id
+  ami                    = "ami-093bd987f8e53e1f2"
   key_name               = "aws-4640"                  # SSH key name
   vpc_security_group_ids = [aws_security_group.web.id] # Pass security group IDs here
   subnet_id              = aws_subnet.web.id           # Pass the subnet ID here
