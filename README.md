@@ -1,7 +1,7 @@
 # week-14-makeup
 
 
-1) Generate SSH key with
+1) Generate SSH key with ssh-keygen -t rsa -b 4096 -f ~/.ssh/aws
 
 
 2) Run the `import-lab-key` script
