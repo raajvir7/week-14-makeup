@@ -1,13 +1,20 @@
-- name: Configure web servers
-  hosts: web
+- name: Configure servers
+  hosts: all
   become: true
-  
+
   tasks:
-    - name: Install nginx
+    - name: Install nginx on Debian
       ansible.builtin.apt:
         name: nginx
         update_cache: yes
         state: present
+      when: ansible_facts.os_family == "Debian"
+
+    - name: Install nginx on Rocky Linux
+      ansible.builtin.dnf:
+        name: nginx
+        state: present
+      when: ansible_facts.distribution == "Rocky"
 
     - name: Create directory structure for web documents
       ansible.builtin.file:
@@ -15,19 +22,38 @@
         state: directory
         mode: '0755'
 
-    - name: Copy nginx conf file to server
+    - name: Copy nginx conf for Debian
       ansible.builtin.copy:
         src: files/nginx.conf
         dest: /etc/nginx/sites-available/default
         mode: '0644'
+      when: ansible_facts.os_family == "Debian"
 
-    - name: Create link to nginx config file to enable it
+    - name: Copy nginx conf for Rocky
+      ansible.builtin.copy:
+        src: files/nginx.conf
+        dest: /etc/nginx/conf.d/default.conf
+        mode: '0644'
+      when: ansible_facts.distribution == "Rocky"
+
+    - name: Enable site on Debian
       ansible.builtin.file:
         src: /etc/nginx/sites-available/default
         dest: /etc/nginx/sites-enabled/default
         state: link
+      when: ansible_facts.os_family == "Debian"
 
-    - name: Generate index.html file from template
+    - name: Set message for web server
+      set_fact:
+        page_message: "Hello from web"
+      when: inventory_hostname in groups['web']
+
+    - name: Set message for database server
+      set_fact:
+        page_message: "Hello from database"
+      when: inventory_hostname in groups['database']
+
+    - name: Deploy HTML template
       ansible.builtin.template:
         src: templates/index.html.j2
         dest: /web/html/index.html
@@ -37,4 +63,4 @@
       ansible.builtin.service:
         name: nginx
         enabled: true
-        state: reloaded
+        state: restarted
